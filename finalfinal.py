@@ -63,10 +63,6 @@ btn = driver.find_element_by_xpath("//*[text()='Groups']")
 btn.click()
 time.sleep(2)
 
-e = driver.find_element_by_xpath(
-    "//a[@class='_4f3b']")
-e.click()
-time.sleep(3)
 
 
 # we keep scrolling to load all groups
