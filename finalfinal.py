@@ -50,7 +50,7 @@ time.sleep(2)
 # search facebook
 input_keyword = driver.find_element_by_name("q")
 # insert keyword
-input_keyword.send_keys("otaku")
+input_keyword.send_keys("manga")
 input_keyword.submit()
 time.sleep(7)
 
@@ -63,6 +63,10 @@ btn = driver.find_element_by_xpath("//*[text()='Groups']")
 btn.click()
 time.sleep(2)
 
+e = driver.find_element_by_xpath(
+    "//a[@class='_4f3b']")
+e.click()
+time.sleep(3)
 
 
 # we keep scrolling to load all groups
@@ -111,17 +115,20 @@ for url in groups_urls:
     except:
         continue
 
-    element_date = driver.find_element_by_xpath(
-        "//span[@class='_2ieo']")
-    group_date = element_date.text
+    try:
+        element_date = driver.find_element_by_xpath(
+            "//span[@class='_2ieo']")
+        group_date = element_date.text
+    except:
+        group_date = ""
 
     print(group_date)
     mycursor = db.cursor()
     sql = "INSERT INTO fbgroups (name, url,creation_date) VALUES (%s, %s, %s)"
     val = (group_name, url, group_date)
     mycursor.execute(sql, val)
-
     db.commit()
+    group_id = mycursor._last_insert_id
     print("commit yay")
 
     # we acceess members of the group
@@ -133,7 +140,6 @@ for url in groups_urls:
         continue
 
     # we scroll to load all members
-    print(datetime.datetime.now().time())
     lenOfPage = driver.execute_script(
         "window.scrollTo(0, document.body.scrollHeight);var lenOfPage=document.body.scrollHeight;return lenOfPage;")
     match = False
@@ -161,20 +167,22 @@ for url in groups_urls:
         user_url = url.split('fref')[0]
         members_urls.append(user_url)
         mycursor = db.cursor()
-        sql = "INSERT INTO Clients (name, url) VALUES (%s, %s)"
+        sql = "INSERT INTO Clients (name, url, group_id) VALUES (%s, %s, %s)"
         try:
-            val = (name, user_url)
+            val = (name, user_url, group_id)
             mycursor.execute(sql, val)
-            db.commit()
         except:
             continue
+
+    db.commit()
+
     print(datetime.datetime.now().time())
     time.sleep(2)
 
     cur = db.cursor()
     mydict = create_dict()
 
-    sql = 'SELECT * from Clients'
+    sql = 'SELECT * from Clients where group_id='+str(group_id)
 
     cur.execute(sql)
     rows = cur.fetchall()
@@ -184,12 +192,9 @@ for url in groups_urls:
 
     stud_json.add(group_name, mydict)
 
-    with open("data.json", 'w', encoding='utf8') as outfile:
+    with open("data3.json", 'w', encoding='utf8') as outfile:
         json.dump(stud_json, outfile, indent=2,
                   sort_keys=True, ensure_ascii=False)
-
-    mycursor = db.cursor()
-    mycursor.execute("TRUNCATE table Clients")
 
 
 time.sleep(10)
